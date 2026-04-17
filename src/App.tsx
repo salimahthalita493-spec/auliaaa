@@ -1,0 +1,499 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  ShoppingBag, 
+  Plus, 
+  Minus, 
+  X, 
+  Pizza as PizzaIcon, 
+  ChefHat, 
+  Clock, 
+  Star,
+  MapPin,
+  Phone
+} from 'lucide-react';
+
+interface MenuItem {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+}
+
+const MENU_ITEMS: MenuItem[] = [
+  {
+    id: 1,
+    name: "Aull Signature Meat",
+    description: "Pepperoni, daging sapi cincang, sosis ayam, dan keju mozzarella melimpah.",
+    price: 85000,
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=800&auto=format&fit=crop",
+    category: "Favorite"
+  },
+  {
+    id: 2,
+    name: "Creamy Mushroom",
+    description: "Saus krim putih, jamur kancing fresh, truffle oil, dan keju parmesan.",
+    price: 75000,
+    image: "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?q=80&w=800&auto=format&fit=crop",
+    category: "Premium"
+  },
+  {
+    id: 3,
+    name: "Spicy Red Devil",
+    description: "Saus tomat pedas, cabai jalapeno, paprika merah, dan daging sapi asap.",
+    price: 78000,
+    image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?q=80&w=800&auto=format&fit=crop",
+    category: "Spicy"
+  },
+  {
+    id: 4,
+    name: "Classic Cheese",
+    description: "Campuran 4 jenis keju pilihan dengan herbs Italia orisinal.",
+    price: 65000,
+    image: "https://images.unsplash.com/photo-1576458088443-04a19bb13da6?q=80&w=800&auto=format&fit=crop",
+    category: "Classic"
+  },
+  {
+    id: 5,
+    name: "Hawaiian Sunset",
+    description: "Nanas segar, potongan ham sapi premium, dan saus tomat gurih.",
+    price: 72000,
+    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop",
+    category: "Unique"
+  },
+  {
+    id: 6,
+    name: "Veggies Delight",
+    description: "Paprika, bawang bombay, jagung manis, dan baby spinach.",
+    price: 68000,
+    image: "https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?q=80&w=800&auto=format&fit=crop",
+    category: "Healthy"
+  }
+];
+
+interface CartItem extends MenuItem {
+  quantity: number;
+}
+
+export default function App() {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const cartTotal = useMemo(() => {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  }, [cart]);
+
+  const cartCount = useMemo(() => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  }, [cart]);
+
+  const addToCart = (item: MenuItem) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.id === item.id);
+      if (existing) {
+        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (itemId: number) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.id === itemId);
+      if (existing && existing.quantity > 1) {
+        return prev.map(i => i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i);
+      }
+      return prev.filter(i => i.id !== itemId);
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-cream font-sans text-stone-800">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-stone-200">
+        <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-pizza-red rounded-xl flex items-center justify-center text-white rotate-6 hover:rotate-0 transition-transform cursor-pointer">
+              <PizzaIcon size={24} />
+            </div>
+            <h1 className="text-2xl font-serif font-bold tracking-tight text-pizza-red">Aull Pizza</h1>
+          </div>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium uppercase tracking-widest text-stone-500">
+            <a href="#menu" className="hover:text-pizza-red transition-colors">Menu</a>
+            <a href="#about" className="hover:text-pizza-red transition-colors">Tentang Kami</a>
+            <a href="#contact" className="hover:text-pizza-red transition-colors">Kontak</a>
+          </div>
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-stone-900 px-4 py-2 rounded-full font-bold transition-all shadow-lg active:scale-95"
+            id="cart-button"
+          >
+            <ShoppingBag size={20} />
+            <span className="hidden sm:inline">Keranjang</span>
+            {cartCount > 0 && (
+              <span className="bg-pizza-red text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden pt-20 pb-16 px-4">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="inline-block px-4 py-1.5 bg-pizza-red/10 text-pizza-red rounded-full text-xs font-bold uppercase tracking-wider mb-6">
+              Autentik Italia di Setiap Gigitan
+            </span>
+            <h2 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-6">
+              Pizza Lezat <br /> 
+              <span className="text-pizza-red italic underline decoration-yellow-400 decoration-3 underline-offset-8">Tanpa Ragukan</span> Rasa.
+            </h2>
+            <p className="text-lg text-stone-600 mb-8 max-w-lg leading-relaxed">
+              Dibuat dengan adonan fermentasi 48 jam dan bahan-bahan premium pilihan. Aull Pizza membawa cita rasa Italia terbaik langsung ke meja Anda.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <a href="#menu" className="bg-pizza-red text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition-all shadow-xl shadow-pizza-red/20 inline-block">
+                Pesan Sekarang
+              </a>
+              <div className="flex items-center gap-4 text-stone-500">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3].map(i => (
+                    <img 
+                      key={i}
+                      src={`https://picsum.photos/seed/user${i}/100/100`} 
+                      alt="Reviewer" 
+                      className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ))}
+                </div>
+                <div>
+                  <div className="flex text-yellow-500">
+                    <Star size={16} fill="currentColor" />
+                    <Star size={16} fill="currentColor" />
+                    <Star size={16} fill="currentColor" />
+                    <Star size={16} fill="currentColor" />
+                    <Star size={16} fill="currentColor" />
+                  </div>
+                  <p className="text-xs font-bold">500+ Pelanggan Puas</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8, rotate: 10 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 0.8, type: "spring" }}
+            className="relative"
+          >
+            <div className="absolute inset-0 bg-yellow-400 rounded-full scale-90 blur-3xl opacity-20 animate-pulse"></div>
+            <img 
+              src="https://images.unsplash.com/photo-1593504049359-74330189a345?q=80&w=1000&auto=format&fit=crop" 
+              alt="Delicious Pizza" 
+              className="relative z-10 w-full rounded-3xl shadow-2xl drop-shadow-2xl"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute -bottom-6 -left-6 z-20 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-4 max-w-xs">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                <Clock size={24} />
+              </div>
+              <div>
+                <p className="text-xs text-stone-400 font-bold uppercase tracking-wider">Estimasi</p>
+                <p className="font-bold">25 - 35 Menit</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="bg-white py-12 border-y border-stone-200">
+        <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center text-pizza-red mb-4">
+              <ChefHat size={24} />
+            </div>
+            <h3 className="font-bold text-sm mb-1 uppercase tracking-wider">Chef Profesional</h3>
+            <p className="text-xs text-stone-500">Resep turunan Italia asli</p>
+          </div>
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center text-pizza-red mb-4">
+              <Star size={24} />
+            </div>
+            <h3 className="font-bold text-sm mb-1 uppercase tracking-wider">Bahan Premium</h3>
+            <p className="text-xs text-stone-500">Local & imported goods</p>
+          </div>
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center text-pizza-red mb-4">
+              <PizzaIcon size={24} />
+            </div>
+            <h3 className="font-bold text-sm mb-1 uppercase tracking-wider">Crust Sempurna</h3>
+            <p className="text-xs text-stone-500">Crunchy di luar, lembut di dalam</p>
+          </div>
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center text-pizza-red mb-4">
+              <Phone size={24} />
+            </div>
+            <h3 className="font-bold text-sm mb-1 uppercase tracking-wider">Pesan Antar</h3>
+            <p className="text-xs text-stone-500">Cepat & tetap hangat</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Menu Section */}
+      <section id="menu" className="py-24 px-4 max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4">Menu Terfavorit</h2>
+          <p className="text-stone-500 max-w-lg mx-auto leading-relaxed">
+            Pilihlah pizza favoritmu dari koleksi kurasi koki kami. Setiap pizza dibuat fresh saat Anda memesan.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {MENU_ITEMS.map((item, idx) => (
+            <motion.div 
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              className="bg-white rounded-[2.5rem] p-4 border border-stone-200 hover:shadow-2xl transition-all group"
+            >
+              <div className="relative overflow-hidden rounded-[2rem] h-64 mb-6">
+                <img 
+                  src={item.image} 
+                  alt={item.name} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-pizza-red shadow-sm">
+                  {item.category}
+                </div>
+              </div>
+              <div className="px-2 pb-2">
+                <div className="flex justify-between items-start mb-2 text-xl font-serif font-bold">
+                  <h3>{item.name}</h3>
+                  <span className="text-stone-400 text-sm font-sans font-medium">Rp{item.price.toLocaleString('id-ID')}</span>
+                </div>
+                <p className="text-stone-500 text-sm mb-6 leading-relaxed mb-8">
+                  {item.description}
+                </p>
+                <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+                  <div className="text-2xl font-bold text-pizza-red">
+                    Rp{item.price.toLocaleString('id-ID')}
+                  </div>
+                  <button 
+                    onClick={() => addToCart(item)}
+                    className="bg-stone-900 text-white p-3 rounded-2xl hover:bg-pizza-red transition-colors shadow-lg shadow-stone-200 group/btn"
+                  >
+                    <Plus className="group-hover/btn:rotate-90 transition-transform" size={20} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-24 px-4 bg-white/50">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div className="order-2 md:order-1">
+            <div className="relative grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <img src="https://images.unsplash.com/photo-1579751626657-72bc17010498?q=80&w=400" className="rounded-3xl h-60 w-full object-cover shadow-lg" alt="Kitchen" referrerPolicy="no-referrer" />
+                <img src="https://images.unsplash.com/photo-1585238342024-78d387f4a707?q=80&w=400" className="rounded-3xl h-40 w-full object-cover shadow-lg" alt="Ingredients" referrerPolicy="no-referrer" />
+              </div>
+              <div className="pt-12">
+                <img src="https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?q=80&w=400" className="rounded-3xl h-80 w-full object-cover shadow-lg" alt="Pizza" referrerPolicy="no-referrer" />
+              </div>
+              <div className="absolute -z-10 bg-pizza-red/5 w-64 h-64 rounded-full -top-12 -left-12 blur-3xl"></div>
+            </div>
+          </div>
+          <div className="order-1 md:order-2">
+            <h2 className="text-4xl font-serif font-bold mb-6">Cerita di Balik <br /><span className="text-pizza-red">Aull Pizza</span></h2>
+            <p className="text-stone-600 mb-6 leading-relaxed">
+              Berawal dari kecintaan akan tradisi Italia, Aull Pizza hadir untuk memberikan pengalaman makan pizza yang berbeda. Kami percaya bahwa kualitas tidak bisa dikompromi.
+            </p>
+            <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-4">
+                <div className="w-6 h-6 bg-pizza-red rounded-full flex-shrink-0 flex items-center justify-center text-white mt-1">
+                  <Star size={12} fill="currentColor" />
+                </div>
+                <div>
+                  <h4 className="font-bold">Adonan Signature</h4>
+                  <p className="text-sm text-stone-500">Fermentasi dingin selama 48 jam untuk rasa yang kompleks dan mudah dicerna.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-6 h-6 bg-pizza-red rounded-full flex-shrink-0 flex items-center justify-center text-white mt-1">
+                  <Star size={12} fill="currentColor" />
+                </div>
+                <div>
+                  <h4 className="font-bold">Saus Handmade</h4>
+                  <p className="text-sm text-stone-500">Dibuat fresh setiap hari dari tomat San Marzano pilihan.</p>
+                </div>
+              </div>
+            </div>
+            <button className="text-pizza-red font-bold flex items-center gap-2 group underline decoration-2 underline-offset-4">
+              Baca Selengkapnya
+              <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer id="contact" className="bg-stone-900 text-stone-400 py-16 px-4">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-12">
+          <div className="col-span-2">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 bg-pizza-red rounded-lg flex items-center justify-center text-white">
+                <PizzaIcon size={18} />
+              </div>
+              <h2 className="text-xl font-serif font-bold text-white">Aull Pizza</h2>
+            </div>
+            <p className="max-w-md mb-8">
+              Membawa kehangatan Italia ke rumah Anda. Nikmati sajian terbaik kami melalui layanan pesan antar maupun makan di tempat.
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 bg-stone-800 rounded-full flex items-center justify-center hover:bg-pizza-red hover:text-white transition-colors cursor-pointer">
+                <Star size={18} />
+              </div>
+              <div className="w-10 h-10 bg-stone-800 rounded-full flex items-center justify-center hover:bg-pizza-red hover:text-white transition-colors cursor-pointer">
+                <MapPin size={18} />
+              </div>
+              <div className="w-10 h-10 bg-stone-800 rounded-full flex items-center justify-center hover:bg-pizza-red hover:text-white transition-colors cursor-pointer">
+                <Phone size={18} />
+              </div>
+            </div>
+          </div>
+          <div>
+            <h4 className="text-white font-bold mb-6 uppercase tracking-widest text-sm text-stone-500">Links</h4>
+            <ul className="space-y-3">
+              <li><a href="#menu" className="hover:text-white transition-colors">Menu</a></li>
+              <li><a href="#about" className="hover:text-white transition-colors">Tentang</a></li>
+              <li><a href="#contact" className="hover:text-white transition-colors">Kontak</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Karier</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-bold mb-6 uppercase tracking-widest text-sm text-stone-500">Lokasi</h4>
+            <p className="mb-4">Jl. Rasa Enak No. 123, Jakarta Selatan, Indonesia</p>
+            <p className="text-white font-bold">+62 812 3456 7890</p>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto mt-16 pt-8 border-t border-stone-800 text-center text-xs">
+          &copy; {new Date().getFullYear()} Aull Pizza. All rights reserved. Crafted for pizza lovers.
+        </div>
+      </footer>
+
+      {/* Shopping Cart Drawer */}
+      <AnimatePresence>
+        {isCartOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCartOpen(false)}
+              className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 px-4"
+            />
+            <motion.div 
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col"
+            >
+              <div className="p-6 border-b border-stone-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center">
+                    <ShoppingBag size={20} className="text-stone-900" />
+                  </div>
+                  <h2 className="text-xl font-bold">Keranjang Anda</h2>
+                </div>
+                <button 
+                  onClick={() => setIsCartOpen(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                >
+                  <X />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {cart.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                    <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-4">
+                      <PizzaIcon size={48} />
+                    </div>
+                    <p className="text-lg font-medium">Wah, keranjangmu masih kosong nih.</p>
+                    <p className="text-sm">Yuk pilih pizza favoritmu dulu!</p>
+                  </div>
+                ) : (
+                  cart.map((item) => (
+                    <div key={item.id} className="flex gap-4 group">
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between font-bold text-sm mb-1">
+                          <h4>{item.name}</h4>
+                          <span>Rp{(item.price * item.quantity).toLocaleString('id-ID')}</span>
+                        </div>
+                        <p className="text-xs text-stone-400 mb-3">{item.category}</p>
+                        <div className="flex items-center gap-3">
+                          <button 
+                            onClick={() => removeFromCart(item.id)}
+                            className="w-8 h-8 rounded-lg border border-stone-200 flex items-center justify-center hover:bg-stone-50 transition-colors"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="font-bold text-sm min-w-[20px] text-center">{item.quantity}</span>
+                          <button 
+                            onClick={() => addToCart(item)}
+                            className="w-8 h-8 rounded-lg border border-stone-200 flex items-center justify-center hover:bg-stone-50 transition-colors"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {cart.length > 0 && (
+                <div className="p-6 border-t border-stone-100 bg-stone-50">
+                  <div className="flex justify-between items-center mb-6">
+                    <span className="text-stone-500 font-medium">Subtotal</span>
+                    <span className="text-2xl font-bold">Rp{cartTotal.toLocaleString('id-ID')}</span>
+                  </div>
+                  <button className="w-full bg-pizza-red text-white py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition-all shadow-xl shadow-pizza-red/20 active:scale-95">
+                    Lanjut Pembayaran
+                  </button>
+                  <p className="text-center text-[10px] text-stone-400 mt-4 uppercase tracking-widest font-bold">
+                    Pajak dan biaya layanan dihitung saat checkout
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
